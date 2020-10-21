@@ -36,6 +36,7 @@ var HTTPDigest = function () {
   // Parse authentication headers and set response.
   //
   HTTPDigest.prototype._handleResponse = function handleResponse(options, res, callback) {
+    var _this = this;
     try{
       var challenge = this._parseChallenge(res.headers['www-authenticate']);
       var ha1 = crypto.createHash('md5');
@@ -89,7 +90,9 @@ var HTTPDigest = function () {
       options.headers = headers;
     }
     catch (err) {
-      console.log("Not a digest auth api")
+      console.log("Not a digest auth api trying it as a basic")
+      options.headers.hostname = 'www.example.com';
+      options.headers.auth = _this.username+":"+_this.password;
     }
 
     http.request(options, function (res) {
