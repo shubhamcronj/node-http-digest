@@ -37,6 +37,7 @@ var HTTPDigest = function () {
   //
   HTTPDigest.prototype._handleResponse = function handleResponse(options, res, callback) {
     var _this = this;
+    var originalOptions = JSON.parse(JSON.stringify(options));
     try{
       var challenge = this._parseChallenge(res.headers['www-authenticate']);
       var ha1 = crypto.createHash('md5');
@@ -88,16 +89,21 @@ var HTTPDigest = function () {
       var headers = options.headers || {};
       headers.Authorization = this._compileParams(authParams);
       options.headers = headers;
+      http.request(options, function (res) {
+        callback(res);
+      }).end();
     }
     catch (err) {
-      console.log("Not a digest auth api trying it as a basic")
-      options.headers.hostname = 'www.example.com';
-      options.headers.auth = _this.username+":"+_this.password;
+      // console.log("Not a digest auth api trying it as a basic")
+      // originalOptions.headers.auth = _this.username+":"+_this.password;
+      var auth = "Basic " + new Buffer(_this.username + ":" + _this.password).toString("base64");
+      originalOptions.headers.Authorization = auth;
+      // console.log(originalOptions)
+      http.request(originalOptions, function (res) {
+        callback(res);
+      }).end();
     }
-
-    http.request(options, function (res) {
-      callback(res);
-    }).end();
+    
   };
 
   //
